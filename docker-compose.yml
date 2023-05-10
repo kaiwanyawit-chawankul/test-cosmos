@@ -1,0 +1,34 @@
+version: '3.9'
+
+services:
+  cosmosdb:
+    image: mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator
+    tty: true
+    restart: always
+    mem_limit: 2G
+    cpu_count: 2
+    environment:
+      # - AZURE_COSMOS_EMULATOR_PARTITION_COUNT=10
+      - AZURE_COSMOS_EMULATOR_ENABLE_DATA_PERSISTENCE=true
+    ports:
+      - "8081:8081"
+      - "10251:10251"
+      - "10252:10252"
+      - "10253:10253"
+    volumes:
+       - cosmosdb:/data/db
+
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: ["dotnet", "test", "--logger", "console;verbosity=normal" ]
+    environment:
+      - MY_SERVICE_URL=http://cosmosdb:8081
+    depends_on:
+      - cosmosdb
+volumes:
+  cosmosdb:
